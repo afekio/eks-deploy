@@ -1,0 +1,56 @@
+# ---------------------------------------------------------------------------
+# database subchart defaults (CloudNativePG cluster)
+# Requires the CloudNativePG operator to be installed cluster-wide beforehand
+# (see ../../../platform/helm-commands.sh).
+# ---------------------------------------------------------------------------
+
+global:
+  namespace: main-app
+  database:
+    host: app-postgres-rw.main-app.svc.cluster.local
+    port: "5432"
+    name: appdb
+    user: appuser
+    # Secret (with a ready-to-use "uri" key) consumed by auth + backend.
+    appSecretName: app-postgres-app
+
+# EFS-backed StorageClass consumed by the CNPG cluster.
+storageClass:
+  create: true
+  name: efs-sc
+  provisioner: efs.csi.aws.com
+  # from Terraform: efs_filesystem_id
+  fileSystemId: fs-03a6fa3964c1b5a17
+  provisioningMode: efs-ap
+  basePath: /cnpg
+  directoryPerms: "700"
+  # postgres user/group inside the CNPG image.
+  uid: "26"
+  gid: "26"
+  reclaimPolicy: Retain
+  volumeBindingMode: Immediate
+  allowVolumeExpansion: true
+
+# Credentials used by CNPG during bootstrap (initdb) and superuser access.
+credentials:
+  # App user secret (kubernetes.io/basic-auth) referenced by the cluster bootstrap.
+  appSecretName: app-db-credentials
+  superuserSecretName: app-postgres-superuser
+  # NOTE: replace with a real strong password / manage via an external secret store.
+  password: ZnVja3lvdWRiMSE=
+
+# Application connection secret (Opaque, with the "uri" key auth/backend read).
+# When you supply your own bootstrap.initdb secret, CNPG does NOT generate the
+# <cluster>-app secret, so this chart creates it deterministically instead.
+appConnectionSecret:
+  create: true
+
+cluster:
+  name: app-postgres
+  instances: 2
+  primaryUpdateStrategy: unsupervised
+  storageSize: 20Gi
+  enablePodAntiAffinity: true
+  topologyKey: kubernetes.io/hostname
+  monitoring:
+    enablePodMonitor: false

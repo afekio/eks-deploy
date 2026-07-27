@@ -1,0 +1,18 @@
+{
+  "aws_region":                "{{ aws_region }}",
+  "project_name":              "{{ project_name }}",
+  "environment":               "{{ app_environment }}",
+  "vpc_cidr":                  "{{ vpc_cidr }}",
+  "public_subnet_cidr":        "{{ public_subnet_cidr }}",
+  "private_subnet_cidr":       "{{ private_subnet_cidr }}",
+  "cluster_name":              "{{ cluster_name }}",
+  "kubernetes_version":        "{{ kubernetes_version }}",
+  "node_instance_type":        "{{ node_instance_type }}",
+  "node_desired_size":         {{ node_desired_size }},
+  "node_min_size":             {{ node_min_size }},
+  "node_max_size":             {{ node_max_size }},
+  "service_account_namespace": "{{ service_account_namespace }}",
+  "service_account_name":      "{{ service_account_name }}",
+  "enable_efs_csi_addon":      {{ enable_efs_csi_addon | lower }},
+  "sns_subscription_emails":   {{ sns_subscription_emails | to_json }}
+}

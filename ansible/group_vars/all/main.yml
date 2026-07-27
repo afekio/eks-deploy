@@ -1,0 +1,81 @@
+# ============================================================================
+# CENTRALIZED VARIABLES for the ENTIRE main-app stack.
+# ----------------------------------------------------------------------------
+# This single file drives BOTH layers:
+#   * Terraform  (infrastructure)  -> rendered into an *.auto.tfvars.json
+#   * Helm       (all microservices) -> rendered into a values override file
+#
+# Secrets live separately in the encrypted `vault.yml` (ansible-vault) in this
+# same directory. Never put passwords here.
+# ============================================================================
+
+# ── Project / AWS identity ──────────────────────────────────────────────────
+project_name: "main-app"
+app_environment: "prod"
+aws_region:   "us-east-1"
+
+# ── Repository layout (paths are relative to the ansible/ playbook dir) ──────
+tf_dir:       "{{ playbook_dir }}/../terrform-deploy"
+helm_dir:     "{{ playbook_dir }}/../helm"
+chart_dir:    "{{ playbook_dir }}/../helm/main-app"
+platform_dir: "{{ playbook_dir }}/../helm/platform"
+
+# ── Terraform: EKS cluster + networking ─────────────────────────────────────
+cluster_name:        "main-app-eks-arm"
+kubernetes_version:  "1.30"
+vpc_cidr:            "10.60.0.0/16"
+public_subnet_cidr:  "10.60.1.0/24"
+private_subnet_cidr: "10.60.2.0/24"
+node_instance_type:  "t4g.small"
+node_desired_size:   2
+node_min_size:       2
+node_max_size:       2
+
+# ── Terraform: IRSA service account (S3 / SNS access for the app) ───────────
+service_account_namespace: "main-app"
+service_account_name:      "app-irsa-sa"
+enable_efs_csi_addon:      true
+
+# ── Terraform: SNS alert recipients (list -> add as many as you like) ───────
+# Each address gets an email-confirmation link it must accept before alerts flow.
+sns_subscription_emails:
+  - "gta.afek@gmail.com"
+
+# ── Kubernetes namespace + Helm release ─────────────────────────────────────
+namespace:   "main-app"
+app_release: "main-app"
+
+# ── Container images (shared registry/repo, per-service tags) ───────────────
+image_registry:    "docker.io"
+image_repository:  "afekio/main-project"
+image_pull_policy: "IfNotPresent"
+auth_image_tag:     "auth0.4"
+backend_image_tag:  "backend0.3"
+frontend_image_tag: "frontend0.3"
+
+# ── In-cluster PostgreSQL (CloudNativePG) connection details ────────────────
+db_name: "appdb"
+db_user: "appuser"
+db_host: "app-postgres-rw.main-app.svc.cluster.local"
+db_port: "5432"
+
+# ── Platform operators (prerequisite Helm charts) ───────────────────────────
+cnpg_release:    "cnpg"
+cnpg_namespace:  "cnpg-system"
+cnpg_repo_name:  "cnpg"
+cnpg_repo_url:   "https://cloudnative-pg.github.io/charts"
+cnpg_chart:      "cnpg/cloudnative-pg"
+cnpg_values:     "{{ platform_dir }}/cnpg-operator-values.yaml"
+
+ingress_release:   "ingress-nginx"
+ingress_namespace: "ingress-nginx"
+ingress_repo_name: "ingress-nginx"
+ingress_repo_url:  "https://kubernetes.github.io/ingress-nginx"
+ingress_chart:     "ingress-nginx/ingress-nginx"
+ingress_values:    "{{ platform_dir }}/ingress-nginx-values.yaml"
+
+# ── Behaviour toggles ───────────────────────────────────────────────────────
+# Set to false with -e install_platform=false to skip the operator install step.
+install_platform: true
+# Per-stage wait timeout for helm/kubectl operations.
+helm_wait_timeout: "600s"

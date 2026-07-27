@@ -1,0 +1,67 @@
+# ============================================================================
+# main-app umbrella values
+# ----------------------------------------------------------------------------
+# `global` values are shared with EVERY subchart automatically by Helm.
+# Anything under a subchart key (frontend/backend/auth/database/...) overrides
+# that subchart's own values.yaml.
+#
+# Values marked "from Terraform" are the ones produced by the terraform stack
+# (see sync-values-from-tf.sh). Change them here or via --set / -f overrides.
+# ============================================================================
+
+global:
+  # Namespace every component is deployed into.
+  namespace: main-app
+
+  # Shared image registry / repository for all microservices.
+  image:
+    registry: docker.io
+    repository: afekio/main-project
+    pullPolicy: IfNotPresent
+
+  # IRSA service account shared by backend + auth (S3 / SNS access).
+  serviceAccount:
+    name: app-irsa-sa
+    # from Terraform: irsa_role_arn
+    roleArn: arn:aws:iam::382535610286:role/main-app-main-app-app-irsa-sa-irsa
+
+  # In-cluster PostgreSQL (CloudNativePG) connection details.
+  database:
+    host: app-postgres-rw.main-app.svc.cluster.local
+    port: "5432"
+    name: appdb
+    user: appuser
+    # Secret (created by the database subchart) holding the ready-to-use "uri" key.
+    appSecretName: app-postgres-app
+
+  # AWS resources consumed by the app.
+  aws:
+    region: us-east-1
+    # from Terraform: s3_bucket_name
+    s3BucketName: main-app-prod-18b2f4fb
+    # from Terraform: sns_topic_arn
+    snsTopicArn: arn:aws:sns:us-east-1:382535610286:main-app-prod-topic
+
+# ----------------------------------------------------------------------------
+# Component toggles + per-subchart overrides.
+# Each subchart keeps its full defaults in its own values.yaml; only override
+# here what you want to differ from those defaults.
+# ----------------------------------------------------------------------------
+
+common:
+  enabled: true
+
+database:
+  enabled: true
+
+auth:
+  enabled: true
+
+backend:
+  enabled: true
+
+frontend:
+  enabled: true
+
+ingress:
+  enabled: true

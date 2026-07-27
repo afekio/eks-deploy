@@ -1,0 +1,41 @@
+# --- Stage 1: The Ephemeral Build Environment ---
+FROM node:24.14.0-alpine AS build
+
+WORKDIR /app
+
+# 1. Generate a fresh Vite React project dynamically
+RUN npx create-vite@latest frontend --template react
+
+WORKDIR /app/frontend
+
+# 2. Install dependencies inside the isolated container
+RUN npm install
+
+# 3. Clean up Vite's default styling to prevent CSS conflicts with our custom styles
+RUN rm src/App.css src/index.css
+
+# 4. Create a clean entry point that explicitly imports React and our form
+RUN echo "import React from 'react';" > src/main.jsx && \
+    echo "import ReactDOM from 'react-dom/client';" >> src/main.jsx && \
+    echo "import App from './App.jsx';" >> src/main.jsx && \
+    echo "ReactDOM.createRoot(document.getElementById('root')).render(<App />);" >> src/main.jsx
+
+# 5. Inject your local JSX file directly as the main App component
+COPY App.jsx src/App.jsx
+
+# 6. Build the production-ready static files
+RUN npm run build
+
+# --- Stage 2: The Production Nginx Server ---
+FROM nginx:latest
+
+# Copy your custom Nginx routing configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+
+# Copy the compiled assets from the build stage
+COPY --from=build /app/frontend/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

@@ -1,0 +1,5 @@
+replicaCount: 2
+config:
+  clusterWide: true
+monitoring:
+  podMonitorEnabled: false

@@ -1,0 +1,58 @@
+# ---------------------------------------------------------------------------
+# backend subchart defaults
+# ---------------------------------------------------------------------------
+
+global:
+  namespace: main-app
+  image:
+    registry: docker.io
+    repository: afekio/main-project
+    pullPolicy: IfNotPresent
+  serviceAccount:
+    name: app-irsa-sa
+  database:
+    appSecretName: app-postgres-app
+
+nameOverride: backend
+
+image:
+  tag: backend0.3
+  registry: ""
+  repository: ""
+  pullPolicy: ""
+
+service:
+  type: ClusterIP
+  port: 5000
+  targetPort: http
+
+containerPort: 5000
+
+envFrom:
+  configMapName: app-config
+  secretName: app-secrets
+
+# Backend talks to auth; AUTH_URL is sourced from the shared ConfigMap.
+authUrl:
+  configMapName: app-config
+  configMapKey: AUTH_BASE_URL
+
+resources:
+  requests:
+    cpu: 150m
+    memory: 256Mi
+  limits:
+    cpu: 700m
+    memory: 768Mi
+
+readinessProbe:
+  tcpSocket:
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+livenessProbe:
+  tcpSocket:
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 20

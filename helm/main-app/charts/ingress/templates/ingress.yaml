@@ -1,0 +1,97 @@
+{{- $ns := .Values.global.namespace -}}
+{{- $class := .Values.ingressClassName -}}
+{{- $svc := .Values.services -}}
+{{- if .Values.health.enabled }}
+# ── Health checks ───────────────────────────────────────────────────────────
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: health-ingress
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/part-of: main-app
+    app.kubernetes.io/component: ingress
+  annotations:
+    kubernetes.io/ingress.class: {{ $class }}
+    nginx.ingress.kubernetes.io/rewrite-target: {{ .Values.health.rewriteTarget }}
+spec:
+  ingressClassName: {{ $class }}
+  rules:
+    - {{ if .Values.host }}host: {{ .Values.host | quote }}
+      {{ end }}http:
+        paths:
+          {{- range .Values.health.paths }}
+          - path: {{ .path }}
+            pathType: Exact
+            backend:
+              service:
+                name: {{ (index $svc .service).name }}
+                port:
+                  number: {{ (index $svc .service).port }}
+          {{- end }}
+{{- end }}
+{{- if .Values.auth.enabled }}
+---
+# ── Auth API (strips /auth prefix) ──────────────────────────────────────────
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: auth-ingress
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/part-of: main-app
+    app.kubernetes.io/component: ingress
+  annotations:
+    kubernetes.io/ingress.class: {{ $class }}
+    nginx.ingress.kubernetes.io/use-regex: {{ .Values.auth.useRegex | quote }}
+    nginx.ingress.kubernetes.io/rewrite-target: {{ .Values.auth.rewriteTarget }}
+spec:
+  ingressClassName: {{ $class }}
+  rules:
+    - {{ if .Values.host }}host: {{ .Values.host | quote }}
+      {{ end }}http:
+        paths:
+          - path: {{ .Values.auth.path }}
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ $svc.auth.name }}
+                port:
+                  number: {{ $svc.auth.port }}
+{{- end }}
+{{- if .Values.main.enabled }}
+---
+# ── Backend API + Frontend catch-all ────────────────────────────────────────
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: main-app-ingress
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/part-of: main-app
+    app.kubernetes.io/component: ingress
+  annotations:
+    kubernetes.io/ingress.class: {{ $class }}
+    nginx.ingress.kubernetes.io/use-regex: {{ .Values.main.useRegex | quote }}
+    nginx.ingress.kubernetes.io/proxy-body-size: {{ .Values.main.proxyBodySize | quote }}
+spec:
+  ingressClassName: {{ $class }}
+  rules:
+    - {{ if .Values.host }}host: {{ .Values.host | quote }}
+      {{ end }}http:
+        paths:
+          - path: {{ .Values.main.backendPath }}
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ $svc.backend.name }}
+                port:
+                  number: {{ $svc.backend.port }}
+          - path: {{ .Values.main.frontendPath }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $svc.frontend.name }}
+                port:
+                  number: {{ $svc.frontend.port }}
+{{- end }}

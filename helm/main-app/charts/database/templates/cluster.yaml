@@ -1,0 +1,34 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ .Values.cluster.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app.kubernetes.io/part-of: main-app
+    app.kubernetes.io/component: database
+spec:
+  instances: {{ .Values.cluster.instances }}
+
+  # CNPG manages primary/replica role switch automatically.
+  primaryUpdateStrategy: {{ .Values.cluster.primaryUpdateStrategy }}
+
+  storage:
+    storageClass: {{ .Values.storageClass.name }}
+    size: {{ .Values.cluster.storageSize }}
+
+  affinity:
+    enablePodAntiAffinity: {{ .Values.cluster.enablePodAntiAffinity }}
+    topologyKey: {{ .Values.cluster.topologyKey }}
+
+  bootstrap:
+    initdb:
+      database: {{ .Values.global.database.name }}
+      owner: {{ .Values.global.database.user }}
+      secret:
+        name: {{ .Values.credentials.appSecretName }}
+
+  superuserSecret:
+    name: {{ .Values.credentials.superuserSecretName }}
+
+  monitoring:
+    enablePodMonitor: {{ .Values.cluster.monitoring.enablePodMonitor }}

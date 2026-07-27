@@ -1,0 +1,51 @@
+# ---------------------------------------------------------------------------
+# ingress subchart defaults
+# Three Ingress objects sharing one NGINX ingress class / NLB entrypoint:
+#   1. health  - exact health paths, rewritten to /health per service
+#   2. auth    - /api/auth/<route> rewritten to /api/<route>
+#   3. main    - backend API (provision/transactions/ai) + frontend catch-all
+# ---------------------------------------------------------------------------
+
+global:
+  namespace: main-app
+
+ingressClassName: nginx
+
+# Optional host (leave empty to serve on the NLB hostname / all hosts).
+host: ""
+
+services:
+  auth:
+    name: auth
+    port: 5001
+  backend:
+    name: backend
+    port: 5000
+  frontend:
+    name: frontend
+    port: 80
+
+health:
+  enabled: true
+  rewriteTarget: /health
+  paths:
+    - path: /api/auth/health
+      service: auth
+    - path: /api/provision/health
+      service: backend
+
+auth:
+  enabled: true
+  useRegex: true
+  rewriteTarget: /api/$1
+  # Explicit auth routes (excludes /health). Strips the /auth prefix.
+  path: /api/auth/(login|register|logout|user.*)
+
+main:
+  enabled: true
+  useRegex: true
+  proxyBodySize: 10m
+  # Backend API paths (trailing $ excludes sub-paths like /health).
+  backendPath: /api/(provision|transactions|ai)$
+  # Frontend catch-all.
+  frontendPath: /

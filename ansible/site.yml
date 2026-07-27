@@ -1,0 +1,7 @@
+---
+# ============================================================================
+# site.yml - master entrypoint. Currently a thin wrapper around deploy.yml so
+# `ansible-playbook site.yml` performs the full end-to-end deployment.
+# ============================================================================
+- name: main-app end-to-end deployment
+  ansible.builtin.import_playbook: deploy.yml

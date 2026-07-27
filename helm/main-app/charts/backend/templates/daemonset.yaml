@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "backend.name" . }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "backend.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.global.serviceAccount.name }}
+      containers:
+        - name: {{ include "backend.name" . }}
+          image: {{ include "backend.image" . }}
+          imagePullPolicy: {{ include "backend.pullPolicy" . }}
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+              name: http
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.envFrom.configMapName }}
+            - secretRef:
+                name: {{ .Values.envFrom.secretName }}
+          env:
+            - name: AUTH_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.authUrl.configMapName }}
+                  key: {{ .Values.authUrl.configMapKey }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.database.appSecretName }}
+                  key: uri
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

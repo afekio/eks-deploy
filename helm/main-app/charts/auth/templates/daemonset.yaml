@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "auth.name" . }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "auth.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "auth.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "auth.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.global.serviceAccount.name }}
+      {{- if .Values.waitForPostgres.enabled }}
+      initContainers:
+        - name: wait-for-postgres
+          image: {{ .Values.waitForPostgres.image }}
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for PostgreSQL to be ready..."
+              until nc -z {{ .Values.waitForPostgres.host }} {{ .Values.waitForPostgres.port }}; do
+                echo "PostgreSQL not ready yet, retrying in {{ .Values.waitForPostgres.intervalSeconds }}s..."
+                sleep {{ .Values.waitForPostgres.intervalSeconds }}
+              done
+              echo "PostgreSQL is ready."
+      {{- end }}
+      containers:
+        - name: {{ include "auth.name" . }}
+          image: {{ include "auth.image" . }}
+          imagePullPolicy: {{ include "auth.pullPolicy" . }}
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+              name: http
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.envFrom.configMapName }}
+            - secretRef:
+                name: {{ .Values.envFrom.secretName }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.database.appSecretName }}
+                  key: uri
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

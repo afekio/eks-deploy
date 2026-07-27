@@ -1,0 +1,41 @@
+---
+# ---------------------------------------------------------------------------
+# Install the cluster-wide platform operators the app depends on:
+#   * CloudNativePG  - PostgreSQL operator (the app database)
+#   * ingress-nginx  - ingress controller / NLB entrypoint
+# ---------------------------------------------------------------------------
+
+- name: Add Helm repositories
+  ansible.builtin.command: "helm repo add {{ item.name }} {{ item.url }}"
+  register: _repo_add
+  changed_when: "'has been added' in _repo_add.stdout"
+  failed_when: _repo_add.rc != 0 and 'already exists' not in _repo_add.stderr
+  loop:
+    - { name: "{{ cnpg_repo_name }}", url: "{{ cnpg_repo_url }}" }
+    - { name: "{{ ingress_repo_name }}", url: "{{ ingress_repo_url }}" }
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Update Helm repositories
+  ansible.builtin.command: helm repo update
+  changed_when: false
+
+- name: Install / upgrade CloudNativePG operator
+  ansible.builtin.command:
+    cmd: >-
+      helm upgrade --install {{ cnpg_release }} {{ cnpg_chart }}
+      --namespace {{ cnpg_namespace }} --create-namespace
+      -f {{ cnpg_values }}
+      --wait --timeout {{ helm_wait_timeout }}
+  register: _cnpg
+  changed_when: "'STATUS: deployed' in _cnpg.stdout"
+
+- name: Install / upgrade ingress-nginx controller
+  ansible.builtin.command:
+    cmd: >-
+      helm upgrade --install {{ ingress_release }} {{ ingress_chart }}
+      --namespace {{ ingress_namespace }} --create-namespace
+      -f {{ ingress_values }}
+      --wait --timeout {{ helm_wait_timeout }}
+  register: _ingress
+  changed_when: "'STATUS: deployed' in _ingress.stdout"

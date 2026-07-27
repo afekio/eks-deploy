@@ -1,0 +1,6 @@
+apiVersion: v2
+name: auth
+description: Auth microservice for main-app (Flask, runs as a DaemonSet).
+type: application
+version: 1.0.0
+appVersion: "0.2"

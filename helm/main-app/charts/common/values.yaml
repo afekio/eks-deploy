@@ -1,0 +1,36 @@
+# ---------------------------------------------------------------------------
+# common subchart defaults
+# Most real values come from the umbrella `global` block; this file only holds
+# defaults so the subchart is usable stand-alone.
+# ---------------------------------------------------------------------------
+
+global:
+  namespace: main-app
+  serviceAccount:
+    name: app-irsa-sa
+    roleArn: ""
+  database:
+    host: app-postgres-rw.main-app.svc.cluster.local
+    port: "5432"
+    name: appdb
+    user: appuser
+  aws:
+    region: us-east-1
+    s3BucketName: ""
+    snsTopicArn: ""
+
+serviceAccount:
+  create: true
+
+configMap:
+  # Extra non-secret env exposed to all services via the app-config ConfigMap.
+  name: app-config
+  authBaseUrl: http://auth.main-app.svc.cluster.local:5001
+  backendBaseUrl: http://backend.main-app.svc.cluster.local:5000
+
+secret:
+  # Application secret (mounted via envFrom by backend + auth).
+  name: app-secrets
+  create: true
+  # from Terraform / generated: application signing key (JWT).
+  secretKey: 8fe0341b4575866102b1ce85c9cd276eb214f0d3c2174a6f73467f5bc39300f8bbaf36be1f79140c2055fa14363c773454ad11cda9c9f9f8b92a609480065299

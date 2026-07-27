@@ -1,0 +1,32 @@
+---
+# ============================================================================
+# deploy.yml - full, ordered, automated deployment of the main-app stack.
+# ----------------------------------------------------------------------------
+# Stages (each is a role):
+#   1. preflight  - verify tools + AWS credentials
+#   2. terraform  - provision AWS infra (VPC/EKS/S3/SNS/EFS/IRSA)
+#   3. kubeconfig - wire kubectl/helm to the new cluster
+#   4. platform   - install CloudNativePG + ingress-nginx operators
+#   5. app        - deploy the umbrella Helm chart (all microservices + DB)
+#
+# Run:  ansible-playbook deploy.yml
+# ============================================================================
+- name: Deploy main-app (infrastructure + platform + application)
+  hosts: local
+  gather_facts: false
+  roles:
+    - role: preflight
+      tags: [preflight]
+
+    - role: terraform
+      tags: [infra, terraform]
+
+    - role: kubeconfig
+      tags: [infra, kubeconfig]
+
+    - role: platform
+      tags: [platform]
+      when: install_platform | bool
+
+    - role: app
+      tags: [app]

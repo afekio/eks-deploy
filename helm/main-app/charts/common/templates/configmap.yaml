@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMap.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app.kubernetes.io/part-of: main-app
+    app.kubernetes.io/component: config
+data:
+  AUTH_BASE_URL: {{ .Values.configMap.authBaseUrl | quote }}
+  BACKEND_BASE_URL: {{ .Values.configMap.backendBaseUrl | quote }}
+  AWS_REGION: {{ .Values.global.aws.region | quote }}
+  DB_HOST: {{ .Values.global.database.host | quote }}
+  DB_PORT: {{ .Values.global.database.port | quote }}
+  DB_NAME: {{ .Values.global.database.name | quote }}
+  DB_USER: {{ .Values.global.database.user | quote }}

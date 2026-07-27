@@ -1,0 +1,54 @@
+---
+# ---------------------------------------------------------------------------
+# Deploy the main-app umbrella chart (frontend, backend, auth, database,
+# ingress). All dynamic values (Terraform outputs, image tags) and secrets
+# (from the vault) are injected via a rendered, temporary override file that
+# is written with 0600 perms and deleted afterwards so no secret lingers.
+# ---------------------------------------------------------------------------
+
+- name: Create a temporary file for the rendered Helm overrides
+  ansible.builtin.tempfile:
+    state: file
+    suffix: .yaml
+    prefix: values-from-ansible.
+  register: _values_tmp
+  changed_when: false
+  no_log: true
+
+- name: Render the Helm override file (Terraform outputs + secrets + image tags)
+  ansible.builtin.template:
+    src: values-from-ansible.yaml.j2
+    dest: "{{ _values_tmp.path }}"
+    mode: "0600"
+  no_log: true
+
+- name: Deploy / upgrade the main-app umbrella chart
+  ansible.builtin.command:
+    cmd: >-
+      helm upgrade --install {{ app_release }} {{ chart_dir }}
+      --namespace {{ namespace }} --create-namespace
+      -f {{ chart_dir }}/values.yaml
+      -f {{ _values_tmp.path }}
+      --wait --timeout {{ helm_wait_timeout }}
+  register: _app_deploy
+  changed_when: "'STATUS: deployed' in _app_deploy.stdout"
+
+- name: Always remove the temporary override file (contains secrets)
+  ansible.builtin.file:
+    path: "{{ _values_tmp.path }}"
+    state: absent
+  when: _values_tmp.path is defined
+  changed_when: false
+  no_log: true
+
+- name: Resolve the ingress entrypoint hostname
+  ansible.builtin.command: >-
+    kubectl get svc -n {{ ingress_namespace }} {{ ingress_release }}-controller
+    -o jsonpath={.status.loadBalancer.ingress[0].hostname}
+  register: _entry
+  changed_when: false
+  failed_when: false
+
+- name: Show the application entrypoint
+  ansible.builtin.debug:
+    msg: "Deployment complete. Ingress entrypoint: {{ _entry.stdout | default('(pending - re-check in a minute)', true) }}"

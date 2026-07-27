@@ -1,0 +1,18 @@
+---
+# Point kubectl / helm at the freshly-provisioned EKS cluster.
+- name: Update kubeconfig for the EKS cluster
+  ansible.builtin.command:
+    cmd: >-
+      aws eks update-kubeconfig
+      --region {{ aws_region_out | default(aws_region) }}
+      --name {{ cluster_name_out | default(cluster_name) }}
+  register: _kube
+  changed_when: "'Added new context' in _kube.stdout or 'Updated context' in _kube.stdout"
+
+- name: Wait until the Kubernetes API is reachable
+  ansible.builtin.command: kubectl get --raw=/readyz
+  register: _readyz
+  changed_when: false
+  retries: 30
+  delay: 10
+  until: _readyz.rc == 0

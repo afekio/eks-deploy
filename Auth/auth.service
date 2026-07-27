@@ -1,0 +1,12 @@
+[Unit]
+Description=Auth Service flask application
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/Register
+ExecStart=/home/ubuntu/Register/venv/bin/python3 /home/ubuntu/Register/app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

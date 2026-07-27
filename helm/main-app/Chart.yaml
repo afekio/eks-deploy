@@ -1,0 +1,34 @@
+apiVersion: v2
+name: main-app
+description: Umbrella chart deploying the full main-app stack (frontend, backend, auth, database, ingress) to EKS.
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+# Each microservice is an independent subchart with its own values.
+# Toggle any component on/off with its <name>.enabled flag in values.yaml.
+dependencies:
+  - name: common
+    version: "1.0.0"
+    repository: "file://charts/common"
+    condition: common.enabled
+  - name: database
+    version: "1.0.0"
+    repository: "file://charts/database"
+    condition: database.enabled
+  - name: auth
+    version: "1.0.0"
+    repository: "file://charts/auth"
+    condition: auth.enabled
+  - name: backend
+    version: "1.0.0"
+    repository: "file://charts/backend"
+    condition: backend.enabled
+  - name: frontend
+    version: "1.0.0"
+    repository: "file://charts/frontend"
+    condition: frontend.enabled
+  - name: ingress
+    version: "1.0.0"
+    repository: "file://charts/ingress"
+    condition: ingress.enabled

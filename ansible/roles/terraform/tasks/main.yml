@@ -1,0 +1,56 @@
+---
+# ---------------------------------------------------------------------------
+# Provision AWS infrastructure (VPC, EKS, S3, SNS, EFS, IRSA) with Terraform.
+# The centralized ansible variables are rendered into an *.auto.tfvars.json so
+# Terraform and Helm share a single source of truth.
+# ---------------------------------------------------------------------------
+
+- name: Render centralized variables into Terraform auto tfvars
+  ansible.builtin.template:
+    src: ansible.auto.tfvars.json.j2
+    dest: "{{ tf_dir }}/ansible.auto.tfvars.json"
+    mode: "0644"
+
+- name: Terraform init
+  ansible.builtin.command:
+    cmd: terraform init -input=false
+    chdir: "{{ tf_dir }}"
+  register: _tf_init
+  changed_when: "'Terraform has been successfully initialized' in _tf_init.stdout
+                 or 'Initializing' in _tf_init.stdout"
+
+- name: Terraform apply
+  ansible.builtin.command:
+    cmd: terraform apply -auto-approve -input=false
+    chdir: "{{ tf_dir }}"
+  register: _tf_apply
+  changed_when: "'Apply complete' in _tf_apply.stdout"
+
+- name: Read Terraform outputs
+  ansible.builtin.command:
+    cmd: terraform output -json
+    chdir: "{{ tf_dir }}"
+  register: _tf_output
+  changed_when: false
+
+- name: Expose Terraform outputs as facts for later roles
+  ansible.builtin.set_fact:
+    tf: "{{ _tf_output.stdout | from_json }}"
+
+- name: Collect the outputs the Helm layer consumes
+  ansible.builtin.set_fact:
+    aws_region_out:    "{{ tf.aws_region.value }}"
+    cluster_name_out:  "{{ tf.eks_cluster_name.value }}"
+    irsa_role_arn:     "{{ tf.irsa_role_arn.value }}"
+    s3_bucket_name:    "{{ tf.s3_bucket_name.value }}"
+    sns_topic_arn:     "{{ tf.sns_topic_arn.value }}"
+    efs_filesystem_id: "{{ tf.efs_filesystem_id.value }}"
+
+- name: Show resolved infrastructure outputs
+  ansible.builtin.debug:
+    msg:
+      - "EKS cluster : {{ cluster_name_out }} ({{ aws_region_out }})"
+      - "IRSA role   : {{ irsa_role_arn }}"
+      - "S3 bucket   : {{ s3_bucket_name }}"
+      - "SNS topic   : {{ sns_topic_arn }}"
+      - "EFS id      : {{ efs_filesystem_id }}"

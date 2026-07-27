@@ -1,0 +1,56 @@
+# ---------------------------------------------------------------------------
+# frontend subchart defaults
+# ---------------------------------------------------------------------------
+
+global:
+  namespace: main-app
+  image:
+    registry: docker.io
+    repository: afekio/main-project
+    pullPolicy: IfNotPresent
+
+nameOverride: frontend
+
+replicaCount: 2
+
+image:
+  tag: frontend0.3
+  registry: ""
+  repository: ""
+  pullPolicy: ""
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: http
+
+containerPort: 80
+
+# Spread replicas across nodes for availability.
+topologySpreadConstraints:
+  enabled: true
+  maxSkew: 1
+  topologyKey: kubernetes.io/hostname
+  whenUnsatisfiable: DoNotSchedule
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 20
+  periodSeconds: 20

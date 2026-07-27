@@ -1,0 +1,23 @@
+---
+# Fail fast if any required CLI or credential is missing on the control node.
+- name: Ensure required command-line tools are installed
+  ansible.builtin.command: "which {{ item }}"
+  changed_when: false
+  register: _tool_check
+  failed_when: _tool_check.rc != 0
+  loop:
+    - terraform
+    - helm
+    - kubectl
+    - aws
+  loop_control:
+    label: "{{ item }}"
+
+- name: Verify AWS credentials are configured
+  ansible.builtin.command: aws sts get-caller-identity
+  changed_when: false
+  register: _aws_id
+
+- name: Show the AWS identity the deployment will use
+  ansible.builtin.debug:
+    msg: "{{ _aws_id.stdout | from_json | json_query('Arn') }}"

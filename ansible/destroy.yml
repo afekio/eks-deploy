@@ -1,0 +1,73 @@
+---
+# ============================================================================
+# destroy.yml - full teardown (reverse order of deploy).
+# ----------------------------------------------------------------------------
+#   1. uninstall the app + operators and clean the namespaces (helm/destroy.sh)
+#   2. empty the S3 bucket
+#   3. terraform destroy the AWS infrastructure
+#
+# This is DESTRUCTIVE. It requires an explicit confirmation flag:
+#   ansible-playbook destroy.yml -e confirm=yes
+# ============================================================================
+- name: Tear down main-app (application + infrastructure)
+  hosts: local
+  gather_facts: false
+
+  tasks:
+    - name: Refuse to run without explicit confirmation
+      ansible.builtin.assert:
+        that:
+          - confirm | default('no') == 'yes'
+        fail_msg: >-
+          Refusing to destroy. Re-run with:  ansible-playbook destroy.yml -e confirm=yes
+
+    - name: Point kubectl at the cluster (best-effort; may already be gone)
+      ansible.builtin.command:
+        cmd: >-
+          aws eks update-kubeconfig
+          --region {{ aws_region }} --name {{ cluster_name }}
+      changed_when: false
+      failed_when: false
+
+    - name: Tear down the Kubernetes workloads + operators (helm/destroy.sh)
+      ansible.builtin.command:
+        cmd: ./destroy.sh -y
+        chdir: "{{ helm_dir }}"
+      register: _k8s_destroy
+      changed_when: true
+      failed_when: false
+
+    - name: Read Terraform outputs
+      ansible.builtin.command:
+        cmd: terraform output -json
+        chdir: "{{ tf_dir }}"
+      register: _tf_output
+      changed_when: false
+      failed_when: false
+
+    - name: Set s3_bucket_name from Terraform outputs
+      ansible.builtin.set_fact:
+        s3_bucket_name: "{{ (_tf_output.stdout | from_json)['s3_bucket_name']['value'] }}"
+      when:
+        - _tf_output.rc == 0
+        - _tf_output.stdout != ''
+        - "'s3_bucket_name' in (_tf_output.stdout | from_json)"
+
+    - name: Empty S3 bucket before Terraform destroy
+      ansible.builtin.command:
+        cmd: aws s3 rm s3://{{ s3_bucket_name }} --recursive
+      register: _s3_empty
+      changed_when: true
+      failed_when: false
+      when: s3_bucket_name is defined
+
+    - name: Terraform destroy the AWS infrastructure
+      ansible.builtin.command:
+        cmd: terraform destroy -auto-approve -input=false
+        chdir: "{{ tf_dir }}"
+      register: _tf_destroy
+      changed_when: "'Destroy complete' in _tf_destroy.stdout"
+
+    - name: Teardown summary
+      ansible.builtin.debug:
+        msg: "Teardown finished. Review output above for any resources needing manual cleanup."
