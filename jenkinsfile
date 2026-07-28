@@ -1,4 +1,4 @@
-ipeline {
+pipeline {
     agent {
         docker {
             image 'jenkins-docker:latest'
@@ -13,7 +13,7 @@ ipeline {
         string(name: 'DOCKERHUB_REPO', defaultValue: 'afekio', description: 'Docker Hub Username or Registry URL (e.g., afekio or my-registry.com/afekio)')
         string(name: 'IMAGE_NAME', defaultValue: 'my-app', description: 'Base name for the docker images')
         string(name: 'IMAGE_TAG', defaultValue: '2.0', description: 'Tag/Version for the images')
-        string(name: 'ALERT_EMAIL', defaultValue: 'admin@example.com', description: 'Email for notifications')
+        string(name: 'ALERT_EMAIL', defaultValue: 'gta.afek@gmail.com', description: 'Email for notifications')
     }
 
     environment {
