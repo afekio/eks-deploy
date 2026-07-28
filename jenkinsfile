@@ -1,34 +1,45 @@
 pipeline {
     agent {
         docker {
-            image 'jenkins-docker:latest'
-            // מיפוי ה-Socket כדי שה-Agent יוכל להריץ פקודות Docker
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
+            // נשתמש באימג' של פייתון שיאפשר הרצת pip ו-pytest טבעית
+            image 'python:3.11-bullseye'
+            // חשוב: הפעלת הקונטיינר כ-root וחיבור ה-Socket כדי שנוכל לבנות אימג'ים
+            args '-u root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
-    // הגדרת משתנים שניתן להזין בעת הרצת ה-Job
     parameters {
         string(name: 'GITHUB_REPO_URL', defaultValue: 'https://github.com/afekio/eks-deploy.git', description: 'URL of the GitHub Repository to clone')
         string(name: 'DOCKERHUB_REPO', defaultValue: 'afekio', description: 'Docker Hub Username or Registry URL (e.g., afekio or my-registry.com/afekio)')
         string(name: 'IMAGE_NAME', defaultValue: 'my-app', description: 'Base name for the docker images')
         string(name: 'IMAGE_TAG', defaultValue: '2.0', description: 'Tag/Version for the images')
-        string(name: 'ALERT_EMAIL', defaultValue: 'gta.afek@gmail.com', description: 'Email for notifications')
     }
 
     environment {
-        // Credential ID מג'נקינס בשביל ההתחברות ל-Docker Hub
         DOCKER_CREDS = 'docker-hub-credentials'
         SERVICES = 'Backend Frontend Auth'
     }
 
     stages {
+        stage('Setup Agent') {
+            steps {
+                script {
+                    echo "Installing Docker CLI inside the Python container..."
+                }
+                // הורדה והתקנה מהירה של שורת הפקודה של Docker כדי שנוכל לדבר עם ה-Socket
+                sh '''
+                curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-24.0.7.tgz -o docker.tgz
+                tar xzvf docker.tgz --strip 1 -C /usr/local/bin docker/docker
+                rm docker.tgz
+                '''
+            }
+        }
+
         stage('Checkout Code') {
             steps {
                 script {
                     echo "Cloning repository from: ${params.GITHUB_REPO_URL}"
                 }
-                // משיכת הקוד מהכתובת שהוזנה בפרמטר
                 git branch: 'main', url: "${params.GITHUB_REPO_URL}"
             }
         }
@@ -78,7 +89,6 @@ pipeline {
                     def folders = env.SERVICES.split(' ')
                     for (folder in folders) {
                         dir(folder) {
-                            // שימוש במשתנה ה-Docker Hub שהוזן בפרמטר
                             def fullImageName = "${params.DOCKERHUB_REPO}/${params.IMAGE_NAME}:${folder}-${params.IMAGE_TAG}"
                             echo "Building image: ${fullImageName}"
                             sh "docker build -t ${fullImageName} ."
@@ -108,14 +118,10 @@ pipeline {
 
     post {
         success {
-            mail to: "${params.ALERT_EMAIL}",
-                 subject: "SUCCESS: Jenkins Pipeline ${env.JOB_NAME}",
-                 body: "Pipeline completed successfully.\nImages pushed to ${params.DOCKERHUB_REPO} with tag ${params.IMAGE_TAG}.\nCheck logs at: ${env.BUILD_URL}"
+            echo "✅ SUCCESS: Pipeline completed successfully. Images pushed to ${params.DOCKERHUB_REPO} with tag ${params.IMAGE_TAG}."
         }
         failure {
-            mail to: "${params.ALERT_EMAIL}",
-                 subject: "FAILED: Jenkins Pipeline ${env.JOB_NAME}",
-                 body: "Pipeline Failed!\nCheck logs at: ${env.BUILD_URL}"
+            echo "❌ FAILED: Pipeline Failed! Check the logs above for more details."
         }
     }
 }
