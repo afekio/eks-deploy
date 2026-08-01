@@ -27,9 +27,9 @@ vpc_cidr:            "10.60.0.0/16"
 public_subnet_cidr:  "10.60.1.0/24"
 private_subnet_cidr: "10.60.2.0/24"
 node_instance_type:  "t4g.small"
-node_desired_size:   2
-node_min_size:       2
-node_max_size:       2
+node_desired_size:   3
+node_min_size:       3
+node_max_size:       4
 
 # ── Terraform: IRSA service account (S3 / SNS access for the app) ───────────
 service_account_namespace: "main-app"

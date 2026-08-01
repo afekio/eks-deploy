@@ -53,12 +53,39 @@
         - _tf_output.stdout != ''
         - "'s3_bucket_name' in (_tf_output.stdout | from_json)"
 
+    - name: Require S3 bucket name before cleanup
+      ansible.builtin.assert:
+        that:
+          - s3_bucket_name is defined
+          - s3_bucket_name | length > 0
+        fail_msg: >-
+          Terraform did not return s3_bucket_name. S3 cleanup and Terraform destroy were stopped.
+
     - name: Empty S3 bucket before Terraform destroy
       ansible.builtin.command:
         cmd: aws s3 rm s3://{{ s3_bucket_name }} --recursive
       register: _s3_empty
-      changed_when: true
-      failed_when: false
+      changed_when: "'delete:' in _s3_empty.stdout"
+      when: s3_bucket_name is defined
+
+    - name: Verify S3 bucket is empty
+      ansible.builtin.command:
+        cmd: >-
+          aws s3api list-objects-v2
+          --bucket {{ s3_bucket_name }}
+          --max-keys 1
+          --query KeyCount
+          --output text
+      register: _s3_remaining_objects
+      changed_when: false
+      when: s3_bucket_name is defined
+
+    - name: Refuse Terraform destroy if S3 objects remain
+      ansible.builtin.assert:
+        that:
+          - _s3_remaining_objects.stdout | int == 0
+        fail_msg: >-
+          S3 bucket {{ s3_bucket_name }} is not empty. Terraform destroy was stopped.
       when: s3_bucket_name is defined
 
     - name: Terraform destroy the AWS infrastructure
