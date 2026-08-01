@@ -37,4 +37,3 @@ sec.yaml
 terraform.tfstate
 terraform.tfstate.*
 *.tfvars
-vault.yml
