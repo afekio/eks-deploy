@@ -42,9 +42,16 @@ The entire deployment process is fully automated using **Ansible** and **Terrafo
 
 ### 📋 Prerequisites
 Ensure you have the following tools installed on your local machine before starting:
-* [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+* Linux any distribution or MacOS (Windows is not supported)
+* [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) - In some linux distributions, you can install it using the package manager. For example, on Ubuntu, you can run:
+```bash
+sudo apt update
+sudo apt install ansible -y
+```
+* [AWS CLI](https://aws.amazon.com/cli/) - Only for administrative tasks, not required for the deployment itself.
+
 * [Terraform](https://developer.hashicorp.com/terraform/downloads)
-* [kubectl](https://kubernetes.io/docs/tasks/tools/)
+* [kubectl](https://kubernetes.io/docs/tasks/tools/) - Only for administrative tasks, not required for the deployment itself.
 
 ### Clone this repository to your local machine:
 ```bash
@@ -128,6 +135,7 @@ ansible-playbook destroy.yml -e confirm=yes
 # Thanks for using the app! I hope it has been a valuable tool for your infrastructure provisioning needs. Or Not its ok 😀
 
 ## App Structure
+
 ![Architecture Diagram](eks-deploy.drawio.svg)
 
 
