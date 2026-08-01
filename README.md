@@ -130,6 +130,7 @@ From the ansible directory, run:
 ```bash
 ansible-playbook destroy.yml -e confirm=yes
 ```
+This step takes some time, Please check your aws console to ensure all resources have been deleted.
 ## 🛑 DANGER: This is a destructive action. It will permanently delete the entire infrastructure, including the database, the S3 buckets, and all files you have generated.
 
 # Thanks for using the app! I hope it has been a valuable tool for your infrastructure provisioning needs. Or Not its ok 😀
@@ -149,6 +150,7 @@ eks-deploy/
 │   ├── site.yml
 │   ├── deploy.yml
 │   ├── destroy.yml
+│   └── requirements.yml
 │   ├── inventory/
 │   │   └── hosts.ini
 │   ├── group_vars/all/
