@@ -1,6 +1,7 @@
 # ── ansible working / secret files that must never be committed ─────────────
 .vault_pass.txt
-vault-plaintext.example.yml
+
 *.retry
 values-from-ansible*.yaml
 ../terrform-deploy/ansible.auto.tfvars.json
+vault.yml

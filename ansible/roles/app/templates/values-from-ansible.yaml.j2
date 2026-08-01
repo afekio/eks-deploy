@@ -23,16 +23,19 @@ common:
     secretKey: {{ vault_app_secret_key | quote }}
 
 auth:
+  replicaCount: {{ applications.auth.replicas }}
   image:
-    tag: {{ auth_image_tag }}
+    tag: {{ applications.auth.image_tag }}
 
 backend:
+  replicaCount: {{ applications.backend.replicas }}
   image:
-    tag: {{ backend_image_tag }}
+    tag: {{ applications.backend.image_tag }}
 
 frontend:
+  replicaCount: {{ applications.frontend.replicas }}
   image:
-    tag: {{ frontend_image_tag }}
+    tag: {{ applications.frontend.image_tag }}
 
 database:
   storageClass:

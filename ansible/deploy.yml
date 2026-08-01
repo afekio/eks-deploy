@@ -26,7 +26,9 @@
 
     - role: platform
       tags: [platform]
-      when: install_platform | bool
+      when:
+        - install_platform | bool
+        - not (update | default(false) | bool)
 
     - role: app
       tags: [app]

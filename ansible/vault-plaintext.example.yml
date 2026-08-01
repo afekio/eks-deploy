@@ -1,0 +1,18 @@
+# ============================================================================
+# SECRETS - PLAINTEXT REFERENCE (pre-encryption copy).
+# ----------------------------------------------------------------------------
+# Encrypt this file into group_vars/all/vault.yml with:
+#   ansible-vault encrypt vault-plaintext.example.yml \
+#     --output group_vars/all/vault.yml
+#
+# Edit in-place later with:
+#   ansible-vault edit group_vars/all/vault.yml
+#
+# NEVER commit this file (it is listed in .gitignore).
+# ============================================================================
+
+# PostgreSQL password (app user + CNPG superuser).
+vault_db_password: "changeme"
+
+# Flask SECRET_KEY / JWT signing key (shared by auth + backend).
+vault_app_secret_key: "changeme"
