@@ -51,15 +51,14 @@ Ensure you have the following tools installed on your local machine before start
 git clone <YOUR_REPO_URL>
 cd <REPO_NAME>
 ```
-📂 Directory Structure
-(TODO: Add directory tree here)
+
 
 ⚠️ Warning: Do not alter the directory structure, as it will break the automated deployment process.
 
 🔒 Managing Secrets with Ansible Vault
 Navigate to the ansible directory:
 
-### Encrypting Secrets
+### 🫆Encrypting Secrets
 Create a file named .vault_pass.txt and enter a strong password inside it. Keep this file secure and never share it.
 ```bash
 cd ansible
@@ -79,6 +78,7 @@ You can verify the encryption was successful and view your secrets by running:
 ansible-vault view group_vars/all/vault.yml
 ```
 ### 🛠️ Configuring Variables
+### All App images pulls from dockerhub, so you can use the default values.
 ### Configure the main deployment variables by editing the following file:
 
 ```yaml
@@ -88,35 +88,104 @@ group_vars/all/main.yml
 
 You must update the `sns_subscription_emails` variable with the email addresses that should receive system notifications.
 
-▶️ Running the Deployment
-Ensure your terminal is in the Ansible project directory:
+### ▶️ Running the App
+Ensure your terminal is in the `ansible` project directory:
 
-Bash
+```bash
 cd deploy-eks-project/ansible
+```
 Execute the deployment playbook:
 
-Bash
+```bash
 ansible-playbook site.yml
-The deployment steps will output to your terminal. The Terraform provisioning phase takes some time, so feel free to grab a coffee ☕.
-
-Once the process completes, the terminal will output a URL. This is the Load Balancer DNS name you will use to access the application in your browser.
+```
+The deployment steps will output to your terminal. The Terraform provisioning phase takes some time, so feel free to grab a cup of coffee and some snacks ☕.
 
 📧 Crucial Post-Deployment Step
 Check the inbox of the email address you configured earlier. You must click the confirmation link in the AWS SNS subscription email. If you do not confirm this subscription, you will not receive application alerts.
 
 The application sends alerts for the following events:
 
-New user registration.
+* New user registration.
 
-Failed login attempts.
+* Failed login attempts.
 
-File views or downloads from a user's personal dashboard.
+* File views or downloads from a user's personal dashboard.
 
-🚨 Destroying the Infrastructure
+Once the process completes, the terminal will output a URL. This is the Load Balancer DNS name you will use to access the application in your browser.
+
+
+### 🚨 Deleting the Infrastructure
 To avoid incurring unnecessary AWS charges, you can completely tear down the environment when you are done testing.
 
 From the ansible directory, run:
 
-Bash
+```bash
 ansible-playbook destroy.yml -e confirm=yes
-🛑 DANGER: This is a destructive action. It will permanently delete the entire infrastructure, including the database, the S3 buckets, and all files you have generated.
+```
+## 🛑 DANGER: This is a destructive action. It will permanently delete the entire infrastructure, including the database, the S3 buckets, and all files you have generated.
+
+# Thanks for using the app! I hope it has been a valuable tool for your infrastructure provisioning needs. Or Not its ok 😀
+
+## App Structure
+![Architecture Diagram](eks-deploy.drawio.svg)
+
+
+
+## 📂 Directory Structure
+```
+
+deploy-eks-project/
+├── ansible/
+│   ├── ansible.cfg
+│   ├── site.yml
+│   ├── deploy.yml
+│   ├── destroy.yml
+│   ├── inventory/
+│   │   └── hosts.ini
+│   ├── group_vars/all/
+│   │   ├── main.yml                 # Central infrastructure/app variables
+│   │   └── vault.yml                # Encrypted secrets
+│   └── roles/
+│       ├── preflight/tasks/main.yml
+│       ├── terraform/
+│       │   ├── tasks/main.yml
+│       │   └── templates/ansible.auto.tfvars.json.j2
+│       ├── kubeconfig/tasks/main.yml
+│       ├── platform/tasks/main.yml
+│       └── app/
+│           ├── tasks/main.yml
+│           └── templates/values-from-ansible.yaml.j2
+├── terrform-deploy/
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   ├── providers.tf
+│   ├── versions.tf
+│   └── modules/
+│       ├── vpc/
+│       ├── eks/
+│       ├── efs/
+│       ├── s3/
+│       ├── sns/
+│       └── irsa/
+├── helm/
+│   ├── deploy.sh
+│   ├── destroy.sh
+│   ├── platform/
+│   │   ├── cnpg-operator-values.yaml
+│   │   └── ingress-nginx-values.yaml
+│   └── main-app/
+│       ├── Chart.yaml
+│       ├── values.yaml
+│       ├── templates/namespace.yaml
+│       └── charts/
+│           ├── common/
+│           ├── database/
+│           ├── frontend/
+│           ├── backend/
+│           ├── auth/
+│           └── ingress/
+└── README.md
+
+```
