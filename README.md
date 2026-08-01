@@ -48,10 +48,10 @@ Ensure you have the following tools installed on your local machine before start
 sudo apt update
 sudo apt install ansible -y
 ```
-* [AWS CLI](https://aws.amazon.com/cli/) - Only for administrative tasks, not required for the deployment itself.
+* [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) - Configure it with your AWS credentials and default region.for the deployment itself. if you don`t know how to configure it, you can ask you ai assistant to help you with that.
 
 * [Terraform](https://developer.hashicorp.com/terraform/downloads)
-* [kubectl](https://kubernetes.io/docs/tasks/tools/) - Only for administrative tasks, not required for the deployment itself.
+* [kubectl](https://kubernetes.io/docs/tasks/tools/) - Only for administrative tasks, not required for the deployment process.
 
 ### Clone this repository to your local machine:
 ```bash

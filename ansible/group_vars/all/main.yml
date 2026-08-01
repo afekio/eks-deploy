@@ -15,7 +15,7 @@ app_environment: "prod"
 aws_region:   "us-east-1"
 
 # ── Repository layout (paths are relative to the ansible/ playbook dir) ──────
-tf_dir:       "{{ playbook_dir }}/../terrform-deploy"
+tf_dir:       "{{ playbook_dir }}/../terraform-deploy"
 helm_dir:     "{{ playbook_dir }}/../helm"
 chart_dir:    "{{ playbook_dir }}/../helm/main-app"
 platform_dir: "{{ playbook_dir }}/../helm/platform"
