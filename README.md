@@ -48,8 +48,8 @@ Ensure you have the following tools installed on your local machine before start
 
 ### Clone this repository to your local machine:
 ```bash
-git clone <YOUR_REPO_URL>
-cd <REPO_NAME>
+git clone https://github.com/afekio/eks-deploy.git
+cd eks-deploy
 ```
 
 
@@ -92,7 +92,7 @@ You must update the `sns_subscription_emails` variable with the email addresses 
 Ensure your terminal is in the `ansible` project directory:
 
 ```bash
-cd deploy-eks-project/ansible
+cd eks-deploy/ansible
 ```
 Execute the deployment playbook:
 
@@ -135,7 +135,7 @@ ansible-playbook destroy.yml -e confirm=yes
 ## 📂 Directory Structure
 ```
 
-deploy-eks-project/
+eks-deploy/
 ├── ansible/
 │   ├── ansible.cfg
 │   ├── site.yml
@@ -156,7 +156,7 @@ deploy-eks-project/
 │       └── app/
 │           ├── tasks/main.yml
 │           └── templates/values-from-ansible.yaml.j2
-├── terrform-deploy/
+├── terraform-deploy/
 │   ├── main.tf
 │   ├── variables.tf
 │   ├── outputs.tf
