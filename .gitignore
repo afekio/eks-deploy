@@ -29,7 +29,6 @@ override.tf.json
 terraform.rc
 .vault_pass
 sec.yaml
-secret.yaml
 secret.yml
 .vault_pass
 *.pem
