@@ -52,7 +52,7 @@ sudo apt install ansible -y
 
 * [Terraform](https://developer.hashicorp.com/terraform/downloads)
 * [kubectl](https://kubernetes.io/docs/tasks/tools/) - Only for administrative tasks, not required for the deployment process.
-
+* [helm](https://helm.sh/docs/intro/install/)
 ### Clone this repository to your local machine:
 ```bash
 git clone https://github.com/afekio/eks-deploy.git
