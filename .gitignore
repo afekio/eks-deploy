@@ -30,7 +30,7 @@ terraform.rc
 .vault_pass
 sec.yaml
 secret.yml
-.vault_pass
+.vault_pass.txt
 *.pem
 sec.yaml
 terraform.tfstate

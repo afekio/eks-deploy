@@ -1,4 +1,4 @@
 ---
-# all modules in this project are ansible.builtin.* — no extras needed
+# all roles are local; all modules are ansible.builtin.* — no Galaxy dependencies
 collections: []
-# Minimum ansible-core version: 2.13 
+roles: [] 
